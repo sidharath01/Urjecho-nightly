@@ -2,6 +2,7 @@ package dev.brahmkshatriya.echo.utils.ui
 
 import android.graphics.drawable.RippleDrawable
 import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import java.util.Timer
@@ -47,6 +48,19 @@ interface GestureListener {
                 performClick()
                 true
             }
+
+            // --- D-pad / TV remote support (added for Fire TV / Android TV) ---
+            isFocusable = true
+            isFocusableInTouchMode = true
+            setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_UP &&
+                    (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER)
+                ) {
+                    listener.onClick()
+                    true
+                } else false
+            }
+            // --- end D-pad support ---
         }
     }
 }
