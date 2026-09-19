@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Echo</string>
+    <string name="app_name" translatable="false">URJiT-Echo</string>
     <string name="app_github_repo" translatable="false">brahmkshatriya/echo</string>
     <string name="okay">Okay</string>
     <string name="cancel">Cancel</string>
