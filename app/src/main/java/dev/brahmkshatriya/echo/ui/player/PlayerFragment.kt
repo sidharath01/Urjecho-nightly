@@ -270,6 +270,11 @@ class PlayerFragment : Fragment() {
             if (isFinalState(it)) adapter.playerSheetStateUpdated()
             if (it == STATE_HIDDEN) viewModel.clearQueue()
             else if (it == STATE_COLLAPSED) emit(uiViewModel.playerBgVisible, false)
+            // D-pad/remote support: give the cursor a visible starting point when the
+            // full player opens, instead of no control being focused at all.
+            if (it == STATE_EXPANDED) {
+                binding.playerControls.trackPlayPause.requestFocus()
+            }
         }
 
         binding.playerControls.root.doOnLayout {
@@ -434,7 +439,12 @@ class PlayerFragment : Fragment() {
         binding.playerControls.run {
             seekBar.apply {
                 addOnChangeListener { _, value, fromUser ->
-                    if (fromUser) trackCurrentTime.text = value.toLong().toTimeString()
+                    if (fromUser) {
+                        trackCurrentTime.text = value.toLong().toTimeString()
+                        // D-pad/remote support: touch drag has no distinct "release" event
+                        // for key-based changes, so seek immediately on every user change.
+                        viewModel.seekTo(value.toLong())
+                    }
                 }
                 addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
                     override fun onStartTrackingTouch(slider: Slider) = Unit
