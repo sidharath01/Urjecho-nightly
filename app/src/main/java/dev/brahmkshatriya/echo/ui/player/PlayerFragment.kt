@@ -171,7 +171,7 @@ class PlayerFragment : Fragment() {
 
         val view = binding.viewPager
         view.outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(view: View, outline: Outline) {
+                        override fun getOutline(view: View, outline: Outline) {
                 outline.setRoundRect(
                     currLeft, currTop, currRight, currBottom, currRound
                 )
@@ -290,6 +290,9 @@ class PlayerFragment : Fragment() {
         binding.playerCollapsedContainer.playerClose.setOnClickListener {
             uiViewModel.changePlayerState(STATE_HIDDEN)
         }
+        binding.playerCollapsedContainer.playerExpand.setOnClickListener {
+            uiViewModel.changePlayerState(STATE_EXPANDED)
+        }
         binding.expandedToolbar.setNavigationOnClickListener {
             uiViewModel.collapsePlayer()
         }
@@ -360,7 +363,7 @@ class PlayerFragment : Fragment() {
         observe(viewModel.queueFlow) { submit() }
 
         val playPauseListener = CheckBoxListener { viewModel.setPlaying(it) }
-        binding.playerControls.trackPlayPause
+                binding.playerControls.trackPlayPause
             .addOnCheckedStateChangedListener(playPauseListener)
         binding.playerCollapsedContainer.collapsedTrackPlayPause
             .addOnCheckedStateChangedListener(playPauseListener)
@@ -543,7 +546,7 @@ class PlayerFragment : Fragment() {
 
             binding.playerCollapsedContainer.run {
                 collapsedPlayingIndicator.setIndicatorColor(colors.accent)
-                collapsedSeekbar.setIndicatorColor(colors.accent)
+                             collapsedSeekbar.setIndicatorColor(colors.accent)
                 collapsedBuffer.setIndicatorColor(colors.accent)
                 collapsedBuffer.trackColor = colors.onBackground
             }
@@ -570,9 +573,40 @@ class PlayerFragment : Fragment() {
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
             subtitle = itemContext?.title
             setOnMenuItemClickListener {
-                if (it.itemId != R.id.menu_more) return@setOnMenuItemClickListener false
-                onMoreClicked(item)
-                true
+                when (it.itemId) {
+                    R.id.menu_more -> {
+                        onMoreClicked(item)
+                        true
+                    }
+                    R.id.menu_volume -> {
+                        val audioManager =
+                            requireContext().getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                        audioManager.adjustStreamVolume(
+                            android.media.AudioManager.STREAM_MUSIC,
+                            android.media.AudioManager.ADJUST_SAME,
+                            android.media.AudioManager.FLAG_SHOW_UI
+                        )
+                        true
+                    }
+                    R.id.menu_keep_screen_on -> {
+                        val window = requireActivity().window
+                        val flag = android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        val isCurrentlyOn = (window.attributes.flags and flag) != 0
+                        if (isCurrentlyOn) {
+                            window.clearFlags(flag)
+                            android.widget.Toast.makeText(
+                                requireContext(), "Screen timeout: Normal", android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            window.addFlags(flag)
+                            android.widget.Toast.makeText(
+                                requireContext(), "Screen timeout: Disabled (screen stays on)", android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        true
+                    }
+                    else -> false
+                }
             }
         }
         playerControls.run {
