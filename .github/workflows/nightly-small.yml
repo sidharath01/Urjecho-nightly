@@ -1,1 +1,51 @@
+name: Compile Nightly (Small Size)
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: { }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Generate a temporary signing key
+        run: |
+          keytool -genkeypair -v \
+            -keystore temp-signing-key.jks \
+            -alias tempkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass tempPass123 -keypass tempPass123 \
+            -dname "CN=Echo, OU=Personal, O=Personal, L=NA, S=NA, C=IN"
+
+      - name: Build with Gradle (Nightly - minified & shrunk)
+        run: |
+          ./gradlew assembleNightly \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/temp-signing-key.jks \
+            -Pandroid.injected.signing.store.password=tempPass123 \
+            -Pandroid.injected.signing.key.alias=tempkey \
+            -Pandroid.injected.signing.key.password=tempPass123
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-nightly-small
+          path: app/build/outputs/apk/nightly/*.apk
+          
